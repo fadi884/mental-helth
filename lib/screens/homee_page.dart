@@ -1,151 +1,248 @@
 import 'package:flutter/material.dart';
-import 'home.dart';
+import 'package:google_fonts/google_fonts.dart'; // تأكد من استيراد Google Fonts إذا كنت تستخدمها
+import 'home.dart'; // تأكد أن هذا المسار صحيح لشاشة تسجيل الدخول
 import 'relax_page.dart';
 import 'sport_page.dart';
 import 'breathing_page.dart';
 import 'insomnia_page.dart';
-import 'community_page.dart'; // استيراد واجهة التواصل مع الآخرين
+import 'community_page.dart';
+import 'voice_therapy_page.dart';
+import 'daily_notes_page.dart';
+import 'diet_and_habit_page.dart'; // **استيراد الواجهة الجديدة هنا**
 
 class HomeePage extends StatelessWidget {
+  const HomeePage({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFE0F7FA),
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(
-          "Home Page",
-          style: TextStyle(
+          "الرئيسية",
+          style: GoogleFonts.cairo(
             color: Colors.white,
             fontWeight: FontWeight.bold,
+            fontSize: 22,
           ),
         ),
-        backgroundColor: Color(0xFF26C6DA),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF26C6DA), Color(0xFF00BCD4)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert, color: Colors.white),
+            icon: const Icon(Icons.more_vert, color: Colors.white),
             onSelected: (value) {
               if (value == "account") {
-                print("Account opened");
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'صفحة الحساب قيد الإنشاء!',
+                      style: GoogleFonts.cairo(),
+                    ),
+                  ),
+                );
               } else if (value == "logout") {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => Home()),
+                  MaterialPageRoute(builder: (context) => const Home()),
                 );
               }
             },
             itemBuilder: (context) => [
-              PopupMenuItem(value: "account", child: Text("Account")),
-              PopupMenuItem(value: "logout", child: Text("Logout")),
+              PopupMenuItem(
+                value: "account",
+                child: Text(
+                  "الحساب",
+                  style: GoogleFonts.cairo(),
+                ),
+              ),
+              PopupMenuItem(
+                value: "logout",
+                child: Text(
+                  "تسجيل الخروج",
+                  style: GoogleFonts.cairo(),
+                ),
+              ),
             ],
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Welcome!",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF00796B),
-                ),
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFE0F7FA), Color(0xFFB2EBF2)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
-              SizedBox(height: 10),
-              Text(
-                "Explore the app features and let us help you in your journey to relaxation and fitness.",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[700],
-                ),
-              ),
-              SizedBox(height: 30),
-
-              // Relaxation Card
-              _buildCard(
-                context,
-                'assets/relax.png',
-                "Start Your Relaxation Journey",
-                "Tap here to experience meditation and tranquility sessions.",
-                RelaxScreen(),
-              ),
-
-              SizedBox(height: 20),
-
-              // Sports Card
-              _buildCard(
-                context,
-                'assets/images/sport.png',
-                "Start Your Workout",
-                "Tap here to go to the fitness exercises page.",
-                SportPage(),
-              ),
-
-              SizedBox(height: 20),
-
-              // Breathing Exercises Card
-              _buildCard(
-                context,
-                'assets/images/breathing.png',
-                "Breathing Exercises",
-                "Tap here to try deep breathing techniques for relaxation.",
-                BreathingPage(),
-              ),
-
-              SizedBox(height: 20),
-
-              // Insomnia Tips Card
-              _buildCard(
-                context,
-                'assets/images/insomnia.png',
-                "Tips for Overcoming Insomnia",
-                "Tap here to get guidelines that help you sleep better.",
-                InsomniaPage(),
-              ),
-
-              SizedBox(height: 20),
-
-              // Community Interaction Card
-              _buildCard(
-                context,
-                'assets/images/community.png',
-                "Join the Community",
-                "Tap here to connect with others and learn from their experiences.",
-                CommunityPage(),
-              ),
-            ],
+            ),
           ),
-        ),
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 80),
+                  Text(
+                    "أهلاً بك!",
+                    style: GoogleFonts.cairo(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF00796B),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    "استكشف ميزات التطبيق ودعنا نساعدك في رحلتك نحو الاسترخاء واللياقة.",
+                    style: GoogleFonts.cairo(
+                      fontSize: 16,
+                      color: Colors.blueGrey.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Relaxation Card
+                  _buildCard(
+                    context,
+                    'assets/relax.png',
+                    "رحلة الاسترخاء",
+                    "اضغط هنا لتجربة جلسات التأمل والهدوء.",
+                    RelaxScreen(), // تم إزالة 'const' لأن RelaxScreen هو StatefulWidget
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Sports Card
+                  _buildCard(
+                    context,
+                    'assets/images/sport.png',
+                    "ابدأ تمرينك",
+                    "اضغط هنا للانتقال إلى صفحة تمارين اللياقة.",
+                    const SportPage(),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Breathing Exercises Card
+                  _buildCard(
+                    context,
+                    'assets/images/breathing.png',
+                    "تمارين التنفس",
+                    "اضغط هنا لتجربة تقنيات التنفس العميق للاسترخاء.",
+                    const BreathingPage(),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Insomnia Tips Card
+                  _buildCard(
+                    context,
+                    'assets/images/insomnia.png',
+                    "نصائح للتغلب على الأرق",
+                    "اضغط هنا للحصول على إرشادات تساعدك على النوم بشكل أفضل.",
+                    const InsomniaPage(),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Community Interaction Card
+                  _buildCard(
+                    context,
+                    'assets/images/community.png',
+                    "انضم إلى المجتمع",
+                    "اضغط هنا للتواصل مع الآخرين والاستفادة من تجاربهم.",
+                    const CommunityPage(),
+                  ),
+                  
+                  const SizedBox(height: 20),
+
+                  // Voice Therapy Card
+                  _buildCard(
+                    context,
+                    'assets/images/voice.png',
+                    "تفريغ الطاقة الصوتية",
+                    "اضغط هنا للتحدث والتعبير عن مشاعرك بحرية.",
+                    const VoiceTherapyPage(),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Daily Notes Card
+                  _buildCard(
+                    context,
+                    'assets/images/notes.png',
+                    "ملاحظاتك اليومية",
+                    "سجل مشاعرك وأفكارك اليومية لتتبع تقدمك.",
+                    const DailyNotesPage(),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // **البطاقة الجديدة: النظام الغذائي والعادات**
+                  _buildCard(
+                    context,
+                    'assets/images/diet.png', // مسار الصورة الجديدة
+                    "نظامك الغذائي وعاداتك",
+                    "اكتشف كيف يمكن للعادات الغذائية الصحية أن تحسن حالتك النفسية.",
+                    const DietAndHabitPage(), // الواجهة الجديدة
+                  ),
+
+                  const SizedBox(height: 20), // مسافة إضافية في الأسفل
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Color(0xFF26C6DA),
+        backgroundColor: const Color(0xFF26C6DA),
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.white.withOpacity(0.7),
         currentIndex: 0,
         onTap: (index) {
-          if (index == 1) {
-            print("Survey page opened");
+          if (index == 0) {
+            // أنت بالفعل في الرئيسية
+          } else if (index == 1) {
+            // TODO: Navigate to Survey page
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'صفحة الاستبيان قيد الإنشاء!',
+                  style: GoogleFonts.cairo(),
+                ),
+              ),
+            );
           }
         },
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: "Home",
-          ),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "الرئيسية"),
           BottomNavigationBarItem(
             icon: Icon(Icons.assignment),
-            label: "Survey",
+            label: "استبيان",
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCard(BuildContext context, String imagePath, String title, String description, Widget destination) {
+  Widget _buildCard(
+    BuildContext context,
+    String imagePath,
+    String title,
+    String description,
+    Widget destination,
+  ) {
     return Align(
       alignment: Alignment.center,
       child: GestureDetector(
@@ -156,11 +253,12 @@ class HomeePage extends StatelessWidget {
           );
         },
         child: Card(
-          elevation: 8,
+          elevation: 10,
+          shadowColor: Colors.black.withOpacity(0.2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Padding(
+          child: Container(
             padding: const EdgeInsets.all(15.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -174,23 +272,20 @@ class HomeePage extends StatelessWidget {
                     fit: BoxFit.cover,
                   ),
                 ),
-                SizedBox(height: 15),
+                const SizedBox(height: 15),
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 20,
+                  style: GoogleFonts.cairo(
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF00796B),
+                    color: const Color(0xFF00796B),
                   ),
                 ),
-                SizedBox(height: 5),
+                const SizedBox(height: 8),
                 Text(
                   description,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: GoogleFonts.cairo(fontSize: 15, color: Colors.grey[600]),
                 ),
               ],
             ),

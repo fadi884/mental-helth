@@ -1,50 +1,51 @@
+import 'dart:math'; // لاستخدام Random
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart'; // استيراد Google Fonts
 
 // تأكد من المسار الصحيح لصفحة المؤقت
 import '../screens/exercise_timer_page.dart';
 
-// هذا هو الـ Widget الخاص بواجهة نصائح الأرق
-class InsomniaPage extends StatelessWidget {
+// هذا هو الـ Widget الخاص بواجهة تمارين تعزيز الطاقة
+class EnergyBoostExercisePage extends StatelessWidget {
   // **إضافة const constructor هنا لحل مشكلة const في الصفحات الأخرى**
-  const InsomniaPage({Key? key}) : super(key: key);
+  const EnergyBoostExercisePage({Key? key}) : super(key: key);
 
-  // قائمة بتقنيات مساعدة النوم (يمكن أن تكون const إذا كانت جميع عناصرها ثابتة)
-  final List<Map<String, dynamic>> sleepAidTechniques = const [
+  // قائمة بأنواع التمارين التي تعزز الطاقة
+  final List<Map<String, dynamic>> exercises = const [ // يمكن أن تكون هذه القائمة const إذا كانت جميع عناصرها ثابتة
     {
-      'name': 'الاسترخاء العضلي التدريجي',
-      'duration_seconds': 480, // 8 دقائق
-      'instructions': 'ابدأ بشد مجموعة عضلية واحدة (مثل أصابع القدم) لمدة 5 ثوانٍ ثم أرخها تمامًا لمدة 30 ثانية. انتقل تدريجياً إلى مجموعات العضلات الأخرى في جسمك.',
-      'benefits': 'يقلل التوتر الجسدي، يعزز الاسترخاء العميق، ويساعد على النوم.',
-      'icon': Icons.self_improvement, // يمثل الاسترخاء/التحسين الذاتي
+      'name': 'القفز في المكان',
+      'duration_seconds': 30, // المدة بالثواني
+      'benefits': 'يزيد من معدل ضربات القلب وينشط الجسم بسرعة.',
+      'instructions': 'قفز في المكان مع تحريك الذراعين.',
+      'icon': Icons.directions_run,
     },
     {
-      'name': 'تأمل اليقظة قبل النوم',
-      'duration_seconds': 600, // 10 دقائق
-      'instructions': 'اجلس أو استلقِ براحة. ركز على أنفاسك وإحساس جسمك. إذا شرد ذهنك، أعد تركيزك بلطف إلى اللحظة الحالية.',
-      'benefits': 'يهدئ العقل المزدحم، يقلل القلق، ويحسن جودة النوم.',
-      'icon': Icons.spa, // يمثل اليقظة الذهنية/الاسترخاء
+      'name': 'الاندفاعات (Lunges)',
+      'duration_seconds': 60, // 1 دقيقة
+      'benefits': 'يقوي عضلات الساقين ويعزز الدورة الدموية.',
+      'instructions': 'قم بخطوة كبيرة للأمام مع ثني الركبتين بزاوية 90 درجة.',
+      'icon': Icons.accessibility_new, // أيقونة بديلة مناسبة
     },
     {
-      'name': 'تنفس البطن الهادئ',
+      'name': 'التحرك الجانبي (Side Shuffles)',
+      'duration_seconds': 60, // 1 دقيقة
+      'benefits': 'يحسن التنسيق وخفة الحركة.',
+      'instructions': 'تحرك جانبيًا بخطوات سريعة مع ثني الركبتين قليلاً.',
+      'icon': Icons.swap_horiz,
+    },
+    {
+      'name': 'تأمل المشي السريع',
       'duration_seconds': 300, // 5 دقائق
-      'instructions': 'استلقِ ويد على بطنك. استنشق ببطء من أنفك، ودع بطنك يرتفع. ازفر ببطء من فمك، ودع بطنك ينخفض. ركز على الإيقاع الهادئ.',
-      'benefits': 'ينشط الجهاز العصبي السمبثاوي، يقلل معدل ضربات القلب، ويهيئ الجسم للنوم.',
-      'icon': Icons.bedtime, // يمثل النوم/الليل
+      'benefits': 'يجمع بين الحركة واليقظة لتعزيز التركيز والطاقة.',
+      'instructions': 'امشِ بخطوات سريعة مع التركيز على أنفاسك وأحاسيس قدميك.',
+      'icon': Icons.directions_walk, // أيقونة بديلة مناسبة
     },
     {
-      'name': 'روتين التهدئة قبل النوم',
-      'duration_seconds': 900, // 15 دقائق (مرن)
-      'instructions': 'خصص 15 دقيقة قبل النوم لأنشطة هادئة مثل قراءة كتاب، أخذ حمام دافئ، أو الاستماع إلى موسيقى هادئة. تجنب الشاشات.',
-      'benefits': 'يرسل إشارات لجسمك بأن وقت النوم قد حان، ويحسن الاسترخاء.',
-      'icon': Icons.menu_book, // يمثل القراءة/الروتين
-    },
-    {
-      'name': 'قائمة الامتنان القصيرة',
-      'duration_seconds': 180, // 3 دقائق
-      'instructions': 'قبل النوم، فكر في 3-5 أشياء تشعر بالامتنان لها خلال اليوم. اكتبها أو فكر فيها بصمت.',
-      'benefits': 'يحول التركيز من القلق إلى الإيجابية، ويهدئ العقل للنوم.',
-      'icon': Icons.favorite_border, // يمثل الامتنان/القلب
+      'name': 'دوائر الذراعين',
+      'duration_seconds': 60, // 1 دقيقة
+      'benefits': 'ينشط الجزء العلوي من الجسم ويخفف التوتر في الكتفين.',
+      'instructions': 'مد الذراعين جانباً وقم بعمل دوائر صغيرة للأمام والخلف.',
+      'icon': Icons.rotate_right,
     },
   ];
 
@@ -54,7 +55,7 @@ class InsomniaPage extends StatelessWidget {
       extendBodyBehindAppBar: true, // جعل جسم التطبيق يمتد خلف شريط التطبيق
       appBar: AppBar(
         title: Text(
-          "نصائح للتغلب على الأرق", // عنوان باللغة العربية
+          "تمارين لتعزيز الطاقة", // عنوان باللغة العربية
           style: GoogleFonts.cairo( // استخدام GoogleFonts
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -94,7 +95,7 @@ class InsomniaPage extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(20.0), // زيادة الـ padding
                 child: Text(
-                  "تقنيات مهدئة لمساعدتك على النوم بشكل أفضل.", // نص باللغة العربية
+                  "حركات بسيطة لتجديد نشاطك وتفريغ الطاقة الإيجابية.", // نص باللغة العربية
                   style: GoogleFonts.cairo( // استخدام GoogleFonts
                     fontSize: 18, // حجم أكبر للنص التوجيهي
                     color: Colors.blueGrey.shade800,
@@ -105,17 +106,17 @@ class InsomniaPage extends StatelessWidget {
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0), // padding للقائمة
-                  itemCount: sleepAidTechniques.length,
+                  itemCount: exercises.length,
                   itemBuilder: (context, index) {
-                    final technique = sleepAidTechniques[index];
-                    return _buildTechniqueListItem(
+                    final exercise = exercises[index];
+                    return _buildExerciseListItem(
                       context: context,
-                      name: technique['name'] as String,
-                      formattedDuration: _formatDuration(technique['duration_seconds'] as int),
-                      instructions: technique['instructions'] as String,
-                      benefits: technique['benefits'] as String,
-                      icon: technique['icon'] as IconData,
-                      durationSeconds: technique['duration_seconds'] as int,
+                      name: exercise['name'] as String,
+                      formattedDuration: _formatDuration(exercise['duration_seconds'] as int),
+                      benefits: exercise['benefits'] as String,
+                      instructions: exercise['instructions'] as String,
+                      icon: exercise['icon'] as IconData,
+                      durationSeconds: exercise['duration_seconds'] as int,
                     );
                   },
                 ),
@@ -137,15 +138,15 @@ class InsomniaPage extends StatelessWidget {
     }
   }
 
-  // دالة مساعدة لبناء عنصر قائمة كل تقنية
-  Widget _buildTechniqueListItem({
+  // دالة مساعدة لبناء عنصر قائمة كل تمرين
+  Widget _buildExerciseListItem({
     required BuildContext context,
     required String name,
-    required String formattedDuration,
-    required String instructions,
+    required String formattedDuration, // المدة المنسقة للعرض
     required String benefits,
+    required String instructions,
     required IconData icon,
-    required int durationSeconds,
+    required int durationSeconds, // المدة بالثواني التي ستمرر إلى المؤقت
   }) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0), // هوامش للبطاقة
@@ -159,7 +160,7 @@ class InsomniaPage extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(icon, size: 35, color: const Color(0xFF42A5F5)), // أيقونة أكبر بلون أزرق مهدئ
+                Icon(icon, size: 35, color: const Color(0xFF0288D1)), // أيقونة أكبر بلون متناسق
                 const SizedBox(width: 15),
                 Expanded(
                   child: Text(
@@ -175,7 +176,7 @@ class InsomniaPage extends StatelessWidget {
                   formattedDuration, // عرض المدة المنسقة
                   style: GoogleFonts.cairo( // استخدام GoogleFonts
                     fontSize: 16,
-                    color: Colors.blue.shade600, // لون المدة متناسق
+                    color: Colors.blue.shade600,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -200,7 +201,7 @@ class InsomniaPage extends StatelessWidget {
               alignment: Alignment.bottomRight,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // عند النقر على "ابدأ التقنية"، انتقل إلى صفحة المؤقت
+                  // عند النقر على "ابدأ التمرين"، انتقل إلى صفحة المؤقت
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -213,7 +214,7 @@ class InsomniaPage extends StatelessWidget {
                 },
                 icon: const Icon(Icons.play_arrow, color: Colors.white), // أيقونة ثابتة
                 label: Text(
-                  'ابدأ التقنية', // نص الزر بالعربية
+                  'ابدأ التمرين', // نص الزر بالعربية
                   style: GoogleFonts.cairo( // استخدام GoogleFonts
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
