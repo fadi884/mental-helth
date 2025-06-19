@@ -73,11 +73,9 @@ class _MotivationalMessagesPageState extends State<MotivationalMessagesPage> {
         leading: IconButton( // زر الرجوع
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            // **التعديل هنا:** عند النقر على زر الرجوع، سيتم نقلك إلى صفحة Home
-            Navigator.pushReplacement( // استخدام pushReplacement لمنع العودة إلى صفحة الرسائل من Home
-              context,
-              MaterialPageRoute(builder: (context) => const Home()), // استيراد صفحة Home (تسجيل الدخول)
-            );
+            // **التعديل هنا:** عند النقر على زر الرجوع، سيتم نقلك إلى لوحة التحكم (بدلاً من صفحة تسجيل الدخول)
+            // بما أن المستخدم سيأتي من لوحة التحكم، فمن المنطقي أن يعود إليها.
+            Navigator.pop(context); // ببساطة العودة إلى الشاشة السابقة
           },
         ),
       ),
@@ -138,34 +136,7 @@ class _MotivationalMessagesPageState extends State<MotivationalMessagesPage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity, // جعل الزر يملأ العرض
-                  child: OutlinedButton( // استخدام OutlinedButton لزر "التالي"
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const HomeePage()), // استخدام const هنا (إذا كان HomeePage لديه const constructor)
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF0288D1), // لون النص
-                      side: const BorderSide(color: Color(0xFF0288D1), width: 2), // حدود الزر
-                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      elevation: 0, // إزالة الظل
-                    ),
-                    child: Text(
-                      "ابدأ الاستخدام", // نص الزر بالعربية
-                      style: GoogleFonts.cairo(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
+                // تم إزالة SizedBox الذي يحتوي على OutlinedButton هنا
               ],
             ),
           ),

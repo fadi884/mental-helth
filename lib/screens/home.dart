@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:http/http.dart' as http; // تم تصحيح هذا السطر
 import 'dart:convert';
 import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
+import 'package:shared_preferences/shared_preferences.dart'; // استيراد SharedPreferences
+
 import 'signup_page.dart';
-import 'motivational_messages.dart'; // Assuming MotivationalMessagesPage is the class name
+import 'dashboard_page.dart'; // استيراد صفحة لوحة التحكم
 
 class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key); // Add const constructor for Home itself
+  const Home({Key? key}) : super(key: key); // إضافة const constructor لـ Home نفسها
   @override
   _HomeState createState() => _HomeState();
 }
@@ -16,13 +18,14 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
   final TextEditingController _passwordController = TextEditingController();
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  bool _isLoading = false; // لإدارة حالة التحميل وزر تسجيل الدخول
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800), // Faster fade-in
+      duration: const Duration(milliseconds: 800), // تلاشي سريع للواجهة
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
@@ -31,9 +34,30 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       ),
     );
     _animationController.forward();
+    _checkLoginStatus(); // التحقق من حالة تسجيل الدخول عند بدء التطبيق
+  }
+
+  // دالة للتحقق مما إذا كان المستخدم مسجلاً بالفعل
+  Future<void> _checkLoginStatus() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? accessToken = prefs.getString('access_token');
+    final int? userId = prefs.getInt('user_id');
+    final List<String>? userRoles = prefs.getStringList('user_roles');
+
+    // إذا كان هناك توكن وبيانات مخزنة، قم بتوجيه المستخدم مباشرة إلى لوحة التحكم
+    if (accessToken != null && userId != null && userRoles != null && mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const DashboardPage()), // توجيه إلى DashboardPage
+      );
+    }
   }
 
   Future<void> _loginUser() async {
+    setState(() {
+      _isLoading = true; // بدء التحميل لإظهار مؤشر التقدم
+    });
+
     final String apiUrl = "http://127.0.0.1:8000/api/login";
 
     try {
@@ -49,35 +73,78 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       final Map<String, dynamic> responseData = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Login successful! 🎉")),
-          );
-          // Redirect to Motivational Messages Page
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => MotivationalMessagesPage()), // **REMOVED const HERE**
-          );
-        }
-      } else {
+        // استلام البيانات من الـ Backend
+        final String accessToken = responseData['access_token'];
+        final Map<String, dynamic> userData = responseData['user'];
+        final int userId = userData['id'];
+        final String userName = userData['name'];
+        final String userEmail = userData['email'];
+        final List<String> userRoles = List<String>.from(userData['roles']); // جلب الأدوار
+
+        // تخزين البيانات في SharedPreferences
+        final SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('access_token', accessToken);
+        await prefs.setInt('user_id', userId);
+        await prefs.setString('user_name', userName);
+        await prefs.setString('user_email', userEmail);
+        await prefs.setStringList('user_roles', userRoles); // تخزين الأدوار كقائمة من الـ Strings
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text("Error: ${responseData['message'] ?? 'Login failed. Please check your credentials.'}"),
+              content: Text("Login successful! 🎉 مرحباً بك, $userName! دورك: ${userRoles.join(', ')}",
+              style: GoogleFonts.cairo(),
+              ),
+              backgroundColor: Colors.green.shade400,
+            ),
+          );
+          // توجيه المستخدم إلى DashboardPage
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const DashboardPage()),
+          );
+        }
+      } else {
+        // معالجة الأخطاء من الـ Backend
+        if (mounted) {
+          String errorMessage = responseData['message'] ?? 'Login failed. Please check your credentials.';
+          if (responseData['messages'] != null && responseData['messages'] is Map) {
+            Map<String, dynamic> messagesMap = responseData['messages'];
+            List<String> validationErrors = [];
+            messagesMap.forEach((field, messages) {
+              if (messages is List) {
+                validationErrors.addAll(messages.map((msg) => msg.toString()));
+              } else if (messages is String) {
+                validationErrors.add(messages);
+              }
+            });
+            if (validationErrors.isNotEmpty) {
+              errorMessage += '\n' + validationErrors.join('\n');
+            }
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Error: $errorMessage", style: GoogleFonts.cairo()),
               backgroundColor: Colors.red.shade400,
             ),
           );
         }
       }
     } catch (e) {
+      // معالجة أخطاء الشبكة أو الاتصال
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Network error: Could not connect to the server. Please check your connection and server status. ($e)"),
+            content: Text("Network error: Could not connect to the server. Please check your connection and server status. ($e)", style: GoogleFonts.cairo()),
             backgroundColor: Colors.red.shade400,
           ),
         );
       }
+    } finally {
+      setState(() {
+        _isLoading = false; // إنهاء التحميل في كل الأحوال
+      });
     }
   }
 
@@ -95,7 +162,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF81D4FA), Color(0xFF4FC3F7)],
+            colors: [Color(0xFF81D4FA), Color(0xFF4FC3F7)], // تدرج لوني جميل
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -108,7 +175,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo Section
+                  // قسم الشعار
                   Container(
                     width: 200,
                     height: 200,
@@ -127,20 +194,20 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                       child: Padding(
                         padding: const EdgeInsets.all(20.0),
                         child: Image.asset(
-                          "assets/logo.png",
+                          "assets/logo.png", // مسار شعارك المحلي
                           fit: BoxFit.contain,
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 40),
-                  // Login Card
+                  // بطاقة تسجيل الدخول
                   Card(
                     elevation: 10,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    color: Colors.white.withOpacity(0.95),
+                    color: Colors.white.withOpacity(0.95), // خلفية شبه شفافة
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
                       child: Column(
@@ -151,7 +218,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                             style: GoogleFonts.cairo(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFF0288D1),
+                              color: const Color(0xFF0288D1), // لون أزرق جذاب
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -175,7 +242,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           const SizedBox(height: 15),
                           TextField(
                             controller: _passwordController,
-                            obscureText: true,
+                            obscureText: true, // لإخفاء كلمة المرور
                             decoration: InputDecoration(
                               labelText: "كلمة المرور",
                               hintText: "أدخل كلمة المرور",
@@ -194,7 +261,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: _loginUser,
+                              onPressed: _isLoading ? null : _loginUser, // تعطيل الزر أثناء التحميل
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF0288D1),
                                 foregroundColor: Colors.white,
@@ -202,15 +269,17 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                elevation: 5,
+                                elevation: 5, // ظل جذاب للزر
                               ),
-                              child: Text(
-                                "تسجيل الدخول",
-                                style: GoogleFonts.cairo(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              child: _isLoading
+                                  ? const CircularProgressIndicator(color: Colors.white) // مؤشر تحميل
+                                  : Text(
+                                      "تسجيل الدخول",
+                                      style: GoogleFonts.cairo(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -218,7 +287,7 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => SignupPage()), // **REMOVED const HERE**
+                                MaterialPageRoute(builder: (context) => const SignupPage()), // الانتقال لصفحة التسجيل
                               );
                             },
                             child: Text(

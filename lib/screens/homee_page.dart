@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:google_fonts/google_fonts.dart'; // تأكد من استيراد Google Fonts إذا كنت تستخدمها
 import 'home.dart'; // تأكد أن هذا المسار صحيح لشاشة تسجيل الدخول
 import 'relax_page.dart';
@@ -8,7 +9,12 @@ import 'insomnia_page.dart';
 import 'community_page.dart';
 import 'voice_therapy_page.dart';
 import 'daily_notes_page.dart';
-import 'diet_and_habit_page.dart'; // **استيراد الواجهة الجديدة هنا**
+import 'diet_and_habit_page.dart';
+import 'educational_resources_page.dart';
+import 'mood_tracker_journal_page.dart';
+import 'settings_page.dart';
+import 'questionnaire_page.dart';
+import 'phobia_page.dart'; // استيراد واجهة الفوبيا
 
 class HomeePage extends StatelessWidget {
   const HomeePage({Key? key}) : super(key: key);
@@ -178,10 +184,10 @@ class HomeePage extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // Daily Notes Card
+                  // Daily Notes Card - **مسار الصورة تم تعديله هنا**
                   _buildCard(
                     context,
-                    'assets/images/notes.png',
+                    'assets/images/nots.png', // **تم تغيير هذا المسار بناءً على مدخلاتك**
                     "ملاحظاتك اليومية",
                     "سجل مشاعرك وأفكارك اليومية لتتبع تقدمك.",
                     const DailyNotesPage(),
@@ -189,13 +195,46 @@ class HomeePage extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // **البطاقة الجديدة: النظام الغذائي والعادات**
+                  // Diet and Habit Card
                   _buildCard(
                     context,
-                    'assets/images/diet.png', // مسار الصورة الجديدة
+                    'assets/images/diet.png',
                     "نظامك الغذائي وعاداتك",
                     "اكتشف كيف يمكن للعادات الغذائية الصحية أن تحسن حالتك النفسية.",
-                    const DietAndHabitPage(), // الواجهة الجديدة
+                    const DietAndHabitPage(),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Educational Resources Card
+                  _buildCard(
+                    context,
+                    'assets/images/educational.png',
+                    "الموارد التعليمية",
+                    "اكتشف مقالات وفيديوهات تساعدك على فهم الصحة النفسية.",
+                    const EducationalResourcesPage(),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Mood Tracker and Journal Card
+                  _buildCard(
+                    context,
+                    'assets/images/mood_tracker.png', // مسار الصورة الافتراضي
+                    "تتبع حالتك ومذكراتك",
+                    "سجل مزاجك وأفكارك اليومية لتفهم نفسك بشكل أفضل.",
+                    const MoodTrackerJournalPage(),
+                  ),
+
+                  const SizedBox(height: 20),
+                  
+                  // Phobia Card
+                  _buildCard(
+                    context,
+                    'assets/images/phobia.png', // مسار الصورة الجديدة
+                    "فهم الفوبيا والتعامل معها",
+                    "تعرف على أنواع الفوبيا الشائعة وكيفية التغلب عليها.",
+                    const PhobiaPage(),
                   ),
 
                   const SizedBox(height: 20), // مسافة إضافية في الأسفل
@@ -213,15 +252,15 @@ class HomeePage extends StatelessWidget {
         onTap: (index) {
           if (index == 0) {
             // أنت بالفعل في الرئيسية
-          } else if (index == 1) {
-            // TODO: Navigate to Survey page
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'صفحة الاستبيان قيد الإنشاء!',
-                  style: GoogleFonts.cairo(),
-                ),
-              ),
+          } else if (index == 1) { // مؤشر الاستبيان
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const QuestionnairePage()),
+            );
+          } else if (index == 2) { // مؤشر الإعدادات
+             Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SettingsPage()),
             );
           }
         },
@@ -230,6 +269,10 @@ class HomeePage extends StatelessWidget {
           BottomNavigationBarItem(
             icon: Icon(Icons.assignment),
             label: "استبيان",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: "الإعدادات",
           ),
         ],
       ),
@@ -270,6 +313,19 @@ class HomeePage extends StatelessWidget {
                     width: 180,
                     height: 180,
                     fit: BoxFit.cover,
+                    // معالج الأخطاء في حالة عدم العثور على الصورة
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 180,
+                        height: 180,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Icon(Icons.mood, size: 80, color: Colors.grey.shade500),
+                        alignment: Alignment.center,
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 15),

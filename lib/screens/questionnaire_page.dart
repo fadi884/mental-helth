@@ -1,9 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:google_fonts/google_fonts.dart'; // استيراد Google Fonts
-import 'package:flutter_application_1/services/api_service.dart'; // تأكد من المسار الصحيح لـ ApiService
-import '../screens/homee_page.dart'; // استيراد الصفحة الرئيسية (HomeePage)
+import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http; // لاستخدام طلبات HTTP
+import 'dart:convert'; // لتحويل JSON
+import 'package:flutter/foundation.dart'; // لاستخدام debugPrint
+
+// لتسهيل إدارة حالة كل سؤال
+class QuestionItem {
+  final String questionText;
+  final List<String> options;
+  String? selectedOption; // لتخزين الإجابة المختارة
+  // إذا كانت الإجابة عبارة عن نص حر
+  TextEditingController? textController; 
+  // إذا كانت الإجابة رقمية (مستوى قلق، توتر)
+  int? selectedValue; 
+
+  QuestionItem({
+    required this.questionText,
+    this.options = const [],
+    this.selectedOption,
+    this.textController,
+    this.selectedValue,
+  });
+}
 
 class QuestionnairePage extends StatefulWidget {
   const QuestionnairePage({Key? key}) : super(key: key);
@@ -13,87 +31,207 @@ class QuestionnairePage extends StatefulWidget {
 }
 
 class _QuestionnairePageState extends State<QuestionnairePage> {
+  // مفتاح النموذج للتحقق من صحة المدخلات
   final _formKey = GlobalKey<FormState>();
-  final ApiService apiService = ApiService(); // إنشاء كائن من ApiService
 
-  final TextEditingController userIdController = TextEditingController();
-  final TextEditingController dateController = TextEditingController();
-  final TextEditingController anxietyLevelController = TextEditingController();
-  final TextEditingController stressLevelController = TextEditingController();
-  final TextEditingController symptomsFrequencyController =
-      TextEditingController();
-  final TextEditingController symptomsSeverityController =
-      TextEditingController();
-  final TextEditingController physicalSymptomsController =
-      TextEditingController();
-  final TextEditingController psychologicalSymptomsController =
-      TextEditingController();
-  final TextEditingController triggersController = TextEditingController();
-  final TextEditingController copingStrategyController =
-      TextEditingController();
-  final TextEditingController dailyLifeImpactController =
-      TextEditingController();
-  final TextEditingController supportNeedsController = TextEditingController();
+  // قائمة الأسئلة التي تطابق حقول الـ API
+  // **ملاحظة: لقد قمت بتبسيط بعض الأسئلة لجعلها مناسبة لواجهة مستخدم Flutter. يمكنك تخصيصها.**
+  late List<QuestionItem> _questions;
+
+  bool _isLoading = false; // حالة للتحميل عند إرسال البيانات
+
+  // **عنوان الـ API الخاص بالاستبيانات**
+  final String _apiUrl = "http://127.0.0.1:8000/api/questionnaires"; // **يتناسب مع بيئة الويب**
+  
+  // **هام: يجب استبدال هذا بـ Auth Token حقيقي من عملية تسجيل الدخول لديك**
+  // وأيضاً user_id الخاص بالمستخدم الذي سجل الدخول
+  final String _authToken = "YOUR_AUTH_TOKEN_HERE"; // **غير هذا بـ توكن حقيقي!**
+  final int _currentUserId = 1; // **غير هذا بـ user_id الحقيقي للمستخدم الذي سجل الدخول!**
+
+  @override
+  void initState() {
+    super.initState();
+    _questions = [
+      QuestionItem(
+        questionText: "كم مرة شعرت بالتوتر أو القلق خلال الأسبوع الماضي؟",
+        options: ["نادراً أو لا على الإطلاق", "عدة أيام", "أكثر من نصف الأيام", "كل يوم تقريباً"],
+      ),
+      QuestionItem(
+        questionText: "ما هو مستوى قلقك من 1 (منخفض جداً) إلى 10 (مرتفع جداً)؟",
+        selectedValue: 5, // قيمة مبدئية
+      ),
+      QuestionItem(
+        questionText: "ما هو مستوى توترك من 1 (منخفض جداً) إلى 10 (مرتفع جداً)؟",
+        selectedValue: 5, // قيمة مبدئية
+      ),
+      QuestionItem(
+        questionText: "اذكر أي أعراض جسدية مرتبطة بالقلق (مثل خفقان القلب، آلام الرأس):",
+        textController: TextEditingController(),
+      ),
+      QuestionItem(
+        questionText: "اذكر أي أعراض نفسية مرتبطة بالقلق (مثل صعوبة التركيز، الأرق):",
+        textController: TextEditingController(),
+      ),
+      QuestionItem(
+        questionText: "ما هي المواقف أو الأشياء التي تثير قلقك (المحفزات)؟",
+        textController: TextEditingController(),
+      ),
+      QuestionItem(
+        questionText: "ما هي استراتيجيات التأقلم التي تستخدمها للتعامل مع القلق؟",
+        textController: TextEditingController(),
+      ),
+      QuestionItem(
+        questionText: "كيف يؤثر القلق على حياتك اليومية (العمل، العلاقات، الأنشطة)؟",
+        textController: TextEditingController(),
+      ),
+      QuestionItem(
+        questionText: "ما نوع الدعم الذي تشعر أنك بحاجة إليه؟",
+        textController: TextEditingController(),
+      ),
+    ];
+  }
 
   @override
   void dispose() {
-    userIdController.dispose();
-    dateController.dispose();
-    anxietyLevelController.dispose();
-    stressLevelController.dispose();
-    symptomsFrequencyController.dispose();
-    symptomsSeverityController.dispose();
-    physicalSymptomsController.dispose();
-    psychologicalSymptomsController.dispose();
-    triggersController.dispose();
-    copingStrategyController.dispose();
-    dailyLifeImpactController.dispose();
-    supportNeedsController.dispose();
+    // التخلص من المتحكمات النصية لتجنب تسرب الذاكرة
+    for (var q in _questions) {
+      q.textController?.dispose();
+    }
     super.dispose();
   }
 
-  Future<void> submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      Map<String, dynamic> questionnaireData = {
-        "user_id": userIdController.text.trim(),
-        "date": dateController.text.trim(),
-        "anxiety_level": int.tryParse(anxietyLevelController.text.trim()) ?? 0,
-        "stress_level": int.tryParse(stressLevelController.text.trim()) ?? 0,
-        "symptoms_frequency": symptomsFrequencyController.text.trim(),
-        "symptoms_severity": symptomsSeverityController.text.trim(),
-        "physical_symptoms": physicalSymptomsController.text.trim(),
-        "psychological_symptoms": psychologicalSymptomsController.text.trim(),
-        "triggers": triggersController.text.trim(),
-        "coping_strategy": copingStrategyController.text.trim(),
-        "daily_life_impact": dailyLifeImpactController.text.trim(),
-        "support_needs": supportNeedsController.text.trim(),
-      };
+  // دالة لإرسال بيانات الاستبيان
+  Future<void> _submitQuestionnaire() async {
+    // التحقق من صحة النموذج بالكامل قبل الإرسال
+    if (!_formKey.currentState!.validate()) {
+      _showSnackBar('الرجاء الإجابة على جميع الأسئلة المطلوبة.', Colors.orange.shade400);
+      return;
+    }
 
-      bool success = await apiService.sendQuestionnaire(questionnaireData);
+    setState(() {
+      _isLoading = true;
+    });
 
-      if (success) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('✅ تم إرسال الاستبيان بنجاح!')),
-          );
+    // جمع البيانات من الأسئلة
+    Map<String, dynamic> questionnaireData = {
+      'user_id': _currentUserId, // يجب أن يكون user_id حقيقي
+      'date': DateTime.now().toIso8601String().split('T')[0], // تنسيق التاريخ Callahan-MM-DD
+      'anxiety_level': _questions[1].selectedValue,
+      'stress_level': _questions[2].selectedValue,
+      'symptoms_frequency': _questions[0].selectedOption,
+      'symptoms_severity': 'Moderate', // هذا الحقل غير موجود في الأسئلة حالياً، يمكن إضافته أو تعيين قيمة افتراضية
+      'physical_symptoms': _questions[3].textController?.text.trim().isNotEmpty == true ? _questions[3].textController!.text.trim() : 'No data provided',
+      'psychological_symptoms': _questions[4].textController?.text.trim().isNotEmpty == true ? _questions[4].textController!.text.trim() : 'No data provided',
+      'triggers': _questions[5].textController?.text.trim().isNotEmpty == true ? _questions[5].textController!.text.trim() : 'No data provided',
+      'coping_strategy': _questions[6].textController?.text.trim().isNotEmpty == true ? _questions[6].textController!.text.trim() : 'No data provided', // **تم التعديل هنا**
+      'daily_life_impact': _questions[7].textController?.text.trim().isNotEmpty == true ? _questions[7].textController!.text.trim() : 'No data provided',
+      'support_needs': _questions[8].textController?.text.trim().isNotEmpty == true ? _questions[8].textController!.text.trim() : 'No data provided',
+    };
 
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const HomeePage(),
-            ), // تأكد من اسم الصفحة هنا
-          );
-        }
+    // طباعة حمولة الطلب للمساعدة في التشخيص
+    debugPrint('Sending Questionnaire Data: ${json.encode(questionnaireData)}');
+
+    try {
+      final response = await http.post(
+        Uri.parse(_apiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $_authToken', // توكن المصادقة
+        },
+        body: json.encode(questionnaireData),
+      );
+
+      if (response.statusCode == 201) {
+        _showSnackBar('✅ تم إرسال الاستبيان بنجاح!', Colors.green.shade400);
+        // إعادة تعيين النموذج بعد الإرسال الناجح
+        _resetForm();
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('❌ حدث خطأ أثناء إرسال الاستبيان!'),
-              backgroundColor: Colors.red.shade400,
-            ),
-          );
+        final errorBody = json.decode(response.body);
+        String errorMessage = '❌ فشل إرسال الاستبيان: ${response.statusCode}';
+        if (errorBody['messages'] != null && errorBody['messages'] is Map) {
+          Map<String, dynamic> messagesMap = errorBody['messages'];
+          List<String> validationErrors = [];
+          messagesMap.forEach((field, messages) {
+            if (messages is List) {
+              validationErrors.addAll(messages.map((msg) => msg.toString()));
+            } else if (messages is String) {
+              validationErrors.add(messages);
+            }
+          });
+          if (validationErrors.isNotEmpty) {
+            errorMessage += '\n' + validationErrors.join('\n');
+          }
+        } else if (errorBody['message'] != null) {
+          errorMessage += '\n' + errorBody['message'];
         }
+        _showSnackBar(errorMessage, Colors.red.shade400);
       }
+    } catch (e) {
+      _showSnackBar('❌ حدث خطأ في الاتصال: $e', Colors.red.shade400);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  // دالة لإعادة تعيين النموذج
+  void _resetForm() {
+    setState(() {
+      _questions = [
+        QuestionItem(
+          questionText: "كم مرة شعرت بالتوتر أو القلق خلال الأسبوع الماضي؟",
+          options: ["نادراً أو لا على الإطلاق", "عدة أيام", "أكثر من نصف الأيام", "كل يوم تقريباً"],
+        ),
+        QuestionItem(
+          questionText: "ما هو مستوى قلقك من 1 (منخفض جداً) إلى 10 (مرتفع جداً)؟",
+          selectedValue: 5,
+        ),
+        QuestionItem(
+          questionText: "ما هو مستوى توترك من 1 (منخفض جداً) إلى 10 (مرتفع جداً)؟",
+          selectedValue: 5,
+        ),
+        QuestionItem(
+          questionText: "اذكر أي أعراض جسدية مرتبطة بالقلق (مثل خفقان القلب، آلام الرأس):",
+          textController: TextEditingController(),
+        ),
+        QuestionItem(
+          questionText: "اذكر أي أعراض نفسية مرتبطة بالقلق (مثل صعوبة التركيز، الأرق):",
+          textController: TextEditingController(),
+        ),
+        QuestionItem(
+          questionText: "ما هي المواقف أو الأشياء التي تثير قلقك (المحفزات)؟",
+          textController: TextEditingController(),
+        ),
+        QuestionItem(
+          questionText: "ما هي استراتيجيات التأقلم التي تستخدمها للتعامل مع القلق؟",
+          textController: TextEditingController(),
+        ),
+        QuestionItem(
+          questionText: "كيف يؤثر القلق على حياتك اليومية (العمل، العلاقات، الأنشطة)؟",
+          textController: TextEditingController(),
+        ),
+        QuestionItem(
+          questionText: "ما نوع الدعم الذي تشعر أنك بحاجة إليه؟",
+          textController: TextEditingController(),
+        ),
+      ];
+      // يجب مسح متحكمات النصوص يدوياً أيضاً إذا تم إعادة إنشائها
+      for (var q in _questions) {
+        q.textController?.clear();
+      }
+    });
+  }
+
+  void _showSnackBar(String message, Color color) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message, style: GoogleFonts.cairo(color: Colors.white)),
+          backgroundColor: color,
+        ),
+      );
     }
   }
 
@@ -103,7 +241,7 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(
-          'استبيان الصحة النفسية',
+          "الاستبيان", // عنوان الصفحة
           style: GoogleFonts.cairo(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -131,152 +269,81 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFFE0F7FA), Color(0xFFB2EBF2)],
+            colors: [Color(0xFFE0F7FA), Color(0xFFB2EBF2)], // تدرج أزرق سماوي ناعم
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
         ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
-              vertical: 20.0,
-            ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20.0),
             child: Form(
               key: _formKey,
-              child: ListView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "الرجاء الإجابة على الأسئلة التالية لمساعدتنا على فهم حالتك النفسية بشكل أفضل.",
+                    "تقييم حالتك النفسية",
+                    style: GoogleFonts.cairo(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blueGrey.shade800,
+                    ),
                     textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    "أجب عن الأسئلة التالية لمساعدتنا على فهم أفضل لحالتك وتوجيهك نحو الموارد المناسبة.",
                     style: GoogleFonts.cairo(
                       fontSize: 16,
                       color: Colors.blueGrey.shade700,
                       fontStyle: FontStyle.italic,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 30),
-                  _buildQuestionnaireField(
-                    controller: userIdController,
-                    label: "معرف المستخدم (User ID)",
-                    icon: Icons.person,
-                    keyboardType: TextInputType.number,
-                  ),
-                  _buildQuestionnaireField(
-                    controller: dateController,
-                    label: "التاريخ",
-                    icon: Icons.calendar_today,
-                    keyboardType: TextInputType.datetime,
-                    onTap: () async {
-                      FocusScope.of(
-                        context,
-                      ).requestFocus(FocusNode()); // لإخفاء لوحة المفاتيح
-                      DateTime? pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2101),
-                        builder: (context, child) {
-                          return Theme(
-                            data: Theme.of(context).copyWith(
-                              textTheme: GoogleFonts.cairoTextTheme(
-                                Theme.of(context).textTheme,
-                              ),
-                              colorScheme: ColorScheme.light(
-                                primary: Color(0xFF0288D1),
-                                onPrimary: Colors.white,
-                                onSurface: Colors.black,
-                              ),
-                              textButtonTheme: TextButtonThemeData(
-                                style: TextButton.styleFrom(
-                                  foregroundColor: Color(0xFF0288D1),
-                                  textStyle: GoogleFonts.cairo(),
-                                ),
-                              ),
-                            ),
-                            child: child!,
-                          );
-                        },
-                      );
-                      if (pickedDate != null) {
-                        dateController.text =
-                            "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
-                      }
-                    },
-                  ),
-                  _buildQuestionnaireField(
-                    controller: anxietyLevelController,
-                    label: "مستوى القلق (1-10)",
-                    icon: Icons.mood_bad,
-                    keyboardType: TextInputType.number,
-                  ),
-                  _buildQuestionnaireField(
-                    controller: stressLevelController,
-                    label: "مستوى التوتر (1-10)",
-                    icon: Icons.sentiment_neutral,
-                    keyboardType: TextInputType.number,
-                  ),
-                  _buildQuestionnaireField(
-                    controller: symptomsFrequencyController,
-                    label: "تكرار الأعراض",
-                    icon: Icons.repeat,
-                  ),
-                  _buildQuestionnaireField(
-                    controller: symptomsSeverityController,
-                    label: "شدة الأعراض",
-                    icon: Icons.medical_services,
-                  ),
-                  _buildQuestionnaireField(
-                    controller: physicalSymptomsController,
-                    label: "الأعراض الجسدية",
-                    icon: Icons.healing, // تم التعديل هنا
-                  ),
-                  _buildQuestionnaireField(
-                    controller: psychologicalSymptomsController,
-                    label: "الأعراض النفسية",
-                    icon: Icons.psychology,
-                  ),
-                  _buildQuestionnaireField(
-                    controller: triggersController,
-                    label: "المحفزات",
-                    icon: Icons.flash_on,
-                  ),
-                  _buildQuestionnaireField(
-                    controller: copingStrategyController,
-                    label: "استراتيجيات التكيف",
-                    icon: Icons.lightbulb,
-                  ),
-                  _buildQuestionnaireField(
-                    controller: dailyLifeImpactController,
-                    label: "تأثير على الحياة اليومية",
-                    icon: Icons.work,
-                  ),
-                  _buildQuestionnaireField(
-                    controller: supportNeedsController,
-                    label: "احتياجات الدعم",
-                    icon: Icons.handshake,
-                  ),
 
-                  const SizedBox(height: 40),
+                  // بناء الأسئلة ديناميكياً
+                  ..._questions.map((qItem) {
+                    if (qItem.options.isNotEmpty) {
+                      // سؤال اختياري (Radio Buttons)
+                      return _buildRadioQuestionCard(qItem);
+                    } else if (qItem.textController != null) {
+                      // سؤال نصي (TextField)
+                      return _buildTextQuestionCard(qItem);
+                    } else if (qItem.selectedValue != null) {
+                      // سؤال رقمي (Slider)
+                      return _buildSliderQuestionCard(qItem);
+                    }
+                    return const SizedBox.shrink(); // في حالة عدم وجود نوع سؤال
+                  }).toList(),
+
+                  const SizedBox(height: 30),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: submitForm,
-                      icon: const Icon(Icons.send, color: Colors.white),
+                      onPressed: _isLoading ? null : _submitQuestionnaire,
+                      icon: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Icon(Icons.send, color: Colors.white),
                       label: Text(
-                        "إرسال الاستبيان",
+                        _isLoading ? "جارٍ الإرسال..." : "إرسال الإجابات",
                         style: GoogleFonts.cairo(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0288D1),
+                        backgroundColor: const Color(0xFF00796B),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 28,
-                          vertical: 16,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
                         ),
@@ -294,53 +361,163 @@ class _QuestionnairePageState extends State<QuestionnairePage> {
     );
   }
 
-  // دالة مساعدة لبناء حقول الاستبيان بشكل احترافي
-  Widget _buildQuestionnaireField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
-    VoidCallback? onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0),
-      child: TextFormField(
-        controller: controller,
-        readOnly: onTap != null, // جعل الحقل للقراءة فقط إذا كان لديه onTap
-        onTap: onTap, // تمرير دالة onTap
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: 'أدخل $label',
-          prefixIcon: Icon(icon, color: Colors.blueGrey.shade600),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.blueGrey.shade300),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: Color(0xFF0288D1), width: 2),
-          ),
-          filled: true,
-          fillColor: Colors.white.withOpacity(0.9),
-          labelStyle: GoogleFonts.cairo(color: Colors.blueGrey.shade800),
-          hintStyle: GoogleFonts.cairo(color: Colors.grey.shade500),
-        ),
-        keyboardType: keyboardType,
-        style: GoogleFonts.cairo(color: Colors.black87),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'الرجاء إدخال $label';
-          }
-          if ((label == "مستوى القلق (1-10)" ||
-                  label == "مستوى التوتر (1-10)") &&
-              keyboardType == TextInputType.number) {
-            final int? level = int.tryParse(value);
-            if (level == null || level < 1 || level > 10) {
-              return 'الرجاء إدخال رقم بين 1 و 10.';
+  Widget _buildRadioQuestionCard(QuestionItem qItem) {
+    return Card(
+      elevation: 5,
+      margin: const EdgeInsets.only(bottom: 20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: FormField<String>( // **تمت إضافة FormField هنا للتحقق من صحة هذا السؤال**
+          validator: (value) {
+            if (qItem.selectedOption == null || qItem.selectedOption!.isEmpty) {
+              return 'الرجاء اختيار خيار.';
             }
-          }
-          return null;
-        },
+            return null;
+          },
+          builder: (FormFieldState<String> state) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  qItem.questionText,
+                  style: GoogleFonts.cairo(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueGrey.shade900,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ...qItem.options.map((option) {
+                  return RadioListTile<String>(
+                    title: Text(
+                      option,
+                      style: GoogleFonts.cairo(fontSize: 16, color: Colors.blueGrey.shade700),
+                    ),
+                    value: option,
+                    groupValue: qItem.selectedOption,
+                    onChanged: (value) {
+                      setState(() {
+                        qItem.selectedOption = value;
+                        state.didChange(value); // إبلاغ FormField بالتغيير
+                      });
+                    },
+                    activeColor: const Color(0xFF00796B),
+                  );
+                }).toList(),
+                // عرض رسالة الخطأ إذا كان هناك خطأ في التحقق من صحة البيانات
+                if (state.hasError)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0, left: 10.0),
+                    child: Text(
+                      state.errorText!,
+                      style: GoogleFonts.cairo(color: Colors.red.shade700, fontSize: 13),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextQuestionCard(QuestionItem qItem) {
+    return Card(
+      elevation: 5,
+      margin: const EdgeInsets.only(bottom: 20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              qItem.questionText,
+              style: GoogleFonts.cairo(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueGrey.shade900,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: qItem.textController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'اكتب إجابتك هنا...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.blueGrey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: Color(0xFF0288D1), width: 2),
+                ),
+                filled: true,
+                fillColor: Colors.grey.shade50.withOpacity(0.8),
+                hintStyle: GoogleFonts.cairo(color: Colors.grey.shade500),
+              ),
+              style: GoogleFonts.cairo(color: Colors.black87),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'هذا السؤال مطلوب.';
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSliderQuestionCard(QuestionItem qItem) {
+    return Card(
+      elevation: 5,
+      margin: const EdgeInsets.only(bottom: 20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              qItem.questionText,
+              style: GoogleFonts.cairo(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueGrey.shade900,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Slider(
+              value: qItem.selectedValue!.toDouble(),
+              min: 1,
+              max: 10,
+              divisions: 9,
+              label: qItem.selectedValue.toString(),
+              onChanged: (newValue) {
+                setState(() {
+                  qItem.selectedValue = newValue.round();
+                });
+              },
+              activeColor: const Color(0xFF00796B),
+              inactiveColor: Colors.teal.shade100,
+              thumbColor: const Color(0xFF0288D1),
+            ),
+            Center(
+              child: Text(
+                'المستوى المختار: ${qItem.selectedValue}',
+                style: GoogleFonts.cairo(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.blueGrey.shade700,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

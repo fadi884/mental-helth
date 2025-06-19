@@ -21,29 +21,28 @@ class _VoiceTherapyPageState extends State<VoiceTherapyPage> {
       _isRecording = !_isRecording;
     });
 
-    if (_isRecording) {
-      // TODO: ابدأ عملية تسجيل الصوت
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'بدء التسجيل... تحدث الآن.',
-            style: GoogleFonts.cairo(),
-          ),
-          backgroundColor: Colors.green.shade400,
-        ),
-      );
-    } else {
-      // TODO: أوقف عملية تسجيل الصوت ومعالجة الملف
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'تم إيقاف التسجيل. جارٍ المعالجة...',
-            style: GoogleFonts.cairo(),
-          ),
-          backgroundColor: Colors.blue.shade400,
-        ),
-      );
-    }
+    // تم إزالة رسائل SnackBar هنا لأن الواجهة شكلية فقط
+    // if (_isRecording) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(
+    //       content: Text(
+    //         'بدء التسجيل... تحدث الآن.',
+    //         style: GoogleFonts.cairo(),
+    //       ),
+    //       backgroundColor: Colors.green.shade400,
+    //     ),
+    //   );
+    // } else {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(
+    //       content: Text(
+    //         'تم إيقاف التسجيل. جارٍ المعالجة...',
+    //         style: GoogleFonts.cairo(),
+    //       ),
+    //       backgroundColor: Colors.blue.shade400,
+    //     ),
+    //   );
+    // }
   }
 
   @override
@@ -137,15 +136,16 @@ class _VoiceTherapyPageState extends State<VoiceTherapyPage> {
                 if (!_isRecording) // زر إضافي للتحكم (اختياري)
                   ElevatedButton.icon(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'هنا يمكن إضافة ميزات أخرى مثل حفظ الصوت أو تحليله.',
-                            style: GoogleFonts.cairo(),
-                          ),
-                          backgroundColor: Colors.grey.shade600,
-                        ),
-                      );
+                      // تم إزالة رسالة SnackBar من هنا أيضاً
+                      // ScaffoldMessenger.of(context).showSnackBar(
+                      //   SnackBar(
+                      //     content: Text(
+                      //       'هنا يمكن إضافة ميزات أخرى مثل حفظ الصوت أو تحليله.',
+                      //       style: GoogleFonts.cairo(),
+                      //     ),
+                      //     backgroundColor: Colors.grey.shade600,
+                      //   ),
+                      // );
                     },
                     icon: const Icon(Icons.info, color: Colors.white),
                     label: Text(

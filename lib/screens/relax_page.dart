@@ -4,9 +4,6 @@ import 'package:google_fonts/google_fonts.dart'; // استيراد Google Fonts
 
 // هذا هو الـ Widget الخاص بواجهة الاسترخاء
 class RelaxScreen extends StatefulWidget {
-  // لا يمكن أن يكون StatefulWidget 'const' إذا كانت حالته تتغير، ولكن يمكن أن يكون الـ constructor نفسه 'const'
-  // إذا لم يكن يستقبل معلمات متغيرة. في هذه الحالة، سنبقيه بدون 'const' لتجنب مشاكل لاحقاً.
-  // للإزالة المشكلة في HomeePage، سنزيل 'const' من استدعاء RelaxScreen()
   const RelaxScreen({Key? key}) : super(key: key); // إضافة const constructor
 
   @override
@@ -121,53 +118,61 @@ class _RelaxScreenState extends State<RelaxScreen> with TickerProviderStateMixin
           },
         ),
       ),
-      body: Container( // استخدام Container مع تدرج لوني للخلفية بدلاً من الصورة
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFE0F7FA), Color(0xFFB2EBF2)], // تدرج أزرق سماوي ناعم
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: Stack(
-          children: [
-            // طبقة داكنة فوق الخلفية لتحسين وضوح النص والبالونات (يمكن تعديلها أو إزالتها)
-            Positioned.fill(
-              child: Container(
-                color: Colors.black.withOpacity(0.2), // ظل خفيف جداً
-              ),
-            ),
-            // عرض جميع البالونات النشطة
-            // يتم وضعها هنا لتظهر فوق الخلفية وتحت النص المركزي
-            ...balloons,
-            // النص المركزي في المنتصف
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "استرخِ واستمتع بتفجير البالونات!", // نص باللغة العربية
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.cairo( // استخدام GoogleFonts
-                      fontSize: 28,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      shadows: [
-                        Shadow(
-                          blurRadius: 10.0,
-                          color: Colors.black.withOpacity(0.5),
-                          offset: const Offset(2.0, 2.0), // ثابتة
-                        ),
-                      ],
-                    ),
+      body: Stack(
+        children: [
+          // **الصورة الخلفية الآن هنا**
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/relax_background.jpg', // مسار الصورة
+              fit: BoxFit.cover, // لتغطية الشاشة بالكامل
+              // معالج الأخطاء في حالة عدم العثور على الصورة
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: const Color(0xFFE0F7FA), // لون احتياطي
+                  alignment: Alignment.center,
+                  child: Text(
+                    'تعذر تحميل الصورة: relax_background.jpg',
+                    style: GoogleFonts.cairo(color: Colors.red.shade700),
                   ),
-                  const SizedBox(height: 40), // ثابتة
-                  // يمكنك إضافة عناصر واجهة مستخدم أخرى هنا إذا أردت
-                ],
-              ),
+                );
+              },
             ),
-          ],
-        ),
+          ),
+          // طبقة داكنة فوق الخلفية لتحسين وضوح النص والبالونات
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.3), // ظل خفيف (يمكنك تعديل الشفافية)
+            ),
+          ),
+          // عرض جميع البالونات النشطة
+          ...balloons,
+          // النص المركزي في المنتصف
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "استرخِ واستمتع بتفجير البالونات!", // نص باللغة العربية
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cairo( // استخدام GoogleFonts
+                    fontSize: 28,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 10.0,
+                        color: Colors.black.withOpacity(0.5),
+                        offset: const Offset(2.0, 2.0), // ثابتة
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 40), // ثابتة
+                // يمكنك إضافة عناصر واجهة مستخدم أخرى هنا إذا أردت
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -183,9 +188,6 @@ class Balloon extends StatefulWidget {
   // دالة تستقبل مفتاح البالون عند النقر عليه
   final Function(Key) onTap;
 
-  // هنا يمكن أن يكون الـ constructor 'const' لأن خصائصه (startX, startY, إلخ) هي 'final'
-  // ولكن الكلاس نفسه StatefulWidget لذا لا يمكن استدعائه بـ 'const' من مكان آخر (مثل HomeePage).
-  // ولكنه يمكن أن يساعد Flutter على تحسين بناء البالونات داخلياً.
   const Balloon({
     required Key key, // يجب أن يكون لكل بالون مفتاح فريد
     required this.startX,
